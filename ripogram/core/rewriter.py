@@ -219,7 +219,7 @@ class RipogramRewriter:
                             print(f"   🔄 再試行 {retry}: 失敗履歴 {failed_attempts}")
                         
                         replacement, replacement_reading = self.rewrite_token_with_context(
-                            surface, sentence, text, banned_chars, failed_attempts, pos
+                            surface, sentence, text, banned_chars, failed_attempts.copy(), pos
                         )
                         
                         # Check if replacement is valid
@@ -230,9 +230,11 @@ class RipogramRewriter:
                             # Success! Break out of retry loop
                             break
                         else:
-                            # Add failed attempt to history if it's different from original
-                            if replacement != surface and replacement not in failed_attempts:
+                            # Always add failed attempt to history (avoid duplicates)
+                            if replacement not in failed_attempts:
                                 failed_attempts.append(replacement)
+                            if verbose:
+                                print(f"   ❌ 失敗: 「{replacement}」を履歴に追加")
                     
                     if verbose:
                         # Check if replacement still contains banned characters
@@ -417,7 +419,7 @@ class RipogramRewriter:
                         print(f"   🔄 再試行 {retry}: 失敗履歴 {failed_attempts}")
                     
                     replacement, replacement_reading = self.rewrite_token(
-                        surface, sentence, banned_chars, failed_attempts, pos
+                        surface, sentence, banned_chars, failed_attempts.copy(), pos
                     )
                     
                     # Check if replacement is valid
@@ -428,9 +430,11 @@ class RipogramRewriter:
                         # Success! Break out of retry loop
                         break
                     else:
-                        # Add failed attempt to history if it's different from original
-                        if replacement != surface and replacement not in failed_attempts:
+                        # Always add failed attempt to history (avoid duplicates)
+                        if replacement not in failed_attempts:
                             failed_attempts.append(replacement)
+                        if verbose:
+                            print(f"   ❌ 失敗: 「{replacement}」を履歴に追加")
                 
                 if verbose:
                     # Check if replacement still contains banned characters
