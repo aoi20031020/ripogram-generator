@@ -38,8 +38,6 @@ cp .env.example .env
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-4.1-nano
-DEFAULT_BANNED_CHARS=さ,い
 ```
 
 ## 使用方法
@@ -77,12 +75,6 @@ python -m ripogram.cli "さるも木から落ちる" --banned-chars "さ,い"
 python -m ripogram.cli "さるも木から落ちる" --banned-chars "さ,い" --verbose
 ```
 
-デフォルト禁止文字を使用:
-
-```bash
-python -m ripogram.cli "さるも木から落ちる"
-```
-
 ### 3. Python API
 
 ```python
@@ -111,7 +103,7 @@ print(result)
 ## コマンドラインオプション
 
 - `sentence`: 変換する日本語文章（必須）
-- `--banned-chars, -b`: 禁止文字（カンマ区切り）
+- `--banned-chars, -b`: 禁止文字（カンマ区切り、必須）
 - `--env-file, -e`: カスタム.env ファイルのパス
 - `--model, -m`: 使用する OpenAI モデル（デフォルト: gpt-4.1-nano）
 - `--verbose, -v`: 詳細出力を有効化
