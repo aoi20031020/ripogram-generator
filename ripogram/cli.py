@@ -25,7 +25,7 @@ def parse_banned_chars(banned_chars_str: str) -> List[str]:
 def main():
     """Main CLI function."""
     parser = argparse.ArgumentParser(
-        description="Generate ripograms (lipograms) in Japanese using OpenAI GPT-4"
+        description="Generate Japanese ripograms using OpenAI GPT-4"
     )
     
     parser.add_argument(
@@ -36,6 +36,7 @@ def main():
     parser.add_argument(
         "--banned-chars", "-b",
         type=str,
+        required=True,
         help="Comma-separated list of banned characters (e.g., 'さ,い')"
     )
     
@@ -68,11 +69,8 @@ def main():
         if args.model:
             config.model_name = args.model
         
-        # Determine banned characters
-        if args.banned_chars:
-            banned_chars = parse_banned_chars(args.banned_chars)
-        else:
-            banned_chars = config.get_default_banned_chars()
+        # Parse banned characters
+        banned_chars = parse_banned_chars(args.banned_chars)
         
         if args.verbose:
             print(f"🔵 元の文: {args.sentence}")

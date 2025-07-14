@@ -3,12 +3,15 @@ Configuration management for ripogram.
 """
 
 import os
-from typing import List, Optional
+from typing import Optional
 from dotenv import load_dotenv
 
 
 class Config:
     """Configuration class for ripogram settings."""
+    
+    # Default values
+    DEFAULT_MODEL = "gpt-4.1-nano"
     
     def __init__(self, env_file: Optional[str] = None):
         """
@@ -23,23 +26,13 @@ class Config:
             load_dotenv()  # Load from default .env file
         
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.model_name = os.getenv("OPENAI_MODEL", "gpt-4")
+        self.model_name = self.DEFAULT_MODEL
         
         if not self.openai_api_key:
             raise ValueError(
                 "OPENAI_API_KEY not found in environment variables. "
                 "Please set it in your .env file or environment."
             )
-    
-    def get_default_banned_chars(self) -> List[str]:
-        """
-        Get default banned characters from environment or return defaults.
-        
-        Returns:
-            List of default banned characters
-        """
-        default_chars = os.getenv("DEFAULT_BANNED_CHARS", "さ,い")
-        return [char.strip() for char in default_chars.split(",")]
     
     def validate(self) -> bool:
         """
