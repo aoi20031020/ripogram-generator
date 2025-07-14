@@ -103,8 +103,9 @@ class RipogramRewriter:
             
             # Add failed attempts information if any
             if failed_attempts:
+                failed_list = '」「'.join(failed_attempts)
                 base_prompt += f"""
-・以下の候補は既に試行済みで使用できません：「{'」「'.join(failed_attempts)}」
+・以下の候補は既に試行済みで使用できません：「{failed_list}」
 ・これらとは**全く異なる**新しい表現を考えてください。
 """
             
@@ -112,9 +113,15 @@ class RipogramRewriter:
             if attempt < 3:
                 strategy = "・文脈に最も適した同義語や類義語で言い換えてください。"
             elif attempt < 6:
-                strategy = "・より広い概念や上位概念で、文の流れを保つ表現を選んでください。"
+                strategy = (
+                    "・より広い概念や上位概念で、"
+                    "文の流れを保つ表現を選んでください。"
+                )
             else:
-                strategy = "・文脈に応じた意訳や、文全体の意味を保つ別の表現方法を試してください。"
+                strategy = (
+                    "・文脈に応じた意訳や、"
+                    "文全体の意味を保つ別の表現方法を試してください。"
+                )
             
             prompt = base_prompt + strategy + """
 ・出力は置き換えた語句 **一単語のみ** にしてください。
@@ -146,8 +153,11 @@ class RipogramRewriter:
                     candidate_reading = ''.join([token['reading'] for token in candidate_tokens])
                     
                     # Check if candidate is valid (no banned characters)
-                    if (not contains_banned(candidate, banned_chars) and
-                            not contains_banned(candidate_reading, banned_chars)):
+                    surface_valid = not contains_banned(candidate, banned_chars)
+                    reading_valid = not contains_banned(
+                        candidate_reading, banned_chars
+                    )
+                    if surface_valid and reading_valid:
                         return candidate, candidate_reading
                     else:
                         # Add failed candidate to history for next attempt
@@ -183,27 +193,44 @@ class RipogramRewriter:
         """
         sentences = self.split_into_sentences(text)
         rewritten_sentences = []
+        total_sentences = len(sentences)
+        
+        if verbose and total_sentences > 1:
+            print(f"\n🔵 全体処理開始: {total_sentences}文を処理します")
+            print("=" * 60)
         
         for i, sentence in enumerate(sentences):
             if verbose:
-                print(f"\n📝 文 {i+1}: {sentence}")
-                print("-" * 50)
+                if total_sentences > 1:
+                    print(f"\n📝 文 {i+1}/{total_sentences}: {sentence}")
+                    print("-" * 50)
+                else:
+                    print(f"\n📝 文: {sentence}")
+                    print("-" * 50)
             
             tokens = self.tokenizer.tokenize(sentence)
             new_tokens = []
+            tokens_processed = 0
+            tokens_replaced = 0
             
             for token_info in tokens:
                 surface = token_info['surface']
                 reading = token_info['reading']
                 pos = token_info['pos']
+                tokens_processed += 1
                 
                 if verbose:
-                    print(f"トークン：{surface}（読み：{reading}）")
+                    token_info_str = (
+                        f"トークン[{tokens_processed}/{len(tokens)}]："
+                        f"{surface}（読み：{reading}）"
+                    )
+                    print(token_info_str)
                 
                 # Check if token contains banned characters
                 if (contains_banned(surface, banned_chars) or
                         contains_banned(reading, banned_chars)):
                     
+                    tokens_replaced += 1
                     if verbose:
                         print(f"❌ 禁止文字を含む：{surface}（読み：{reading}）")
                     
@@ -216,7 +243,7 @@ class RipogramRewriter:
                     max_retries = 5
                     for retry in range(max_retries):
                         if verbose and retry > 0:
-                            print(f"   🔄 再試行 {retry}: 失敗履歴 {failed_attempts}")
+                            print(f"   🔄 再試行 {retry}/{max_retries}: 失敗履歴 {failed_attempts}")
                         
                         replacement, replacement_reading = self.rewrite_token_with_context(
                             surface, sentence, text, banned_chars, failed_attempts.copy(), pos
@@ -228,6 +255,8 @@ class RipogramRewriter:
                         
                         if not surface_has_banned and not reading_has_banned:
                             # Success! Break out of retry loop
+                            if verbose:
+                                print(f"   ✅ 成功: 「{surface}」→「{replacement}」（読み：{replacement_reading}）")
                             break
                         else:
                             # Always add failed attempt to history (avoid duplicates)
@@ -242,26 +271,38 @@ class RipogramRewriter:
                         reading_has_banned = contains_banned(replacement_reading, banned_chars)
                         
                         if surface_has_banned or reading_has_banned:
-                            print(f"⚠️  「{surface}」→「{replacement}」（読み：{replacement_reading}）")
+                            print(f"⚠️  最終結果: 「{surface}」→「{replacement}」（読み：{replacement_reading}）")
                             if surface_has_banned:
-                                print(f"   表記に禁止文字が含まれています: {replacement}")
+                                print(f"   ⚠️  表記に禁止文字が含まれています: {replacement}")
                             if reading_has_banned:
                                 # Show detailed reading analysis
                                 banned_in_reading = [char for char in banned_chars if char in replacement_reading]
-                                print(f"   読みに禁止文字が含まれています: {replacement_reading}")
+                                print(f"   ⚠️  読みに禁止文字が含まれています: {replacement_reading}")
                                 print(f"   検出された禁止文字: {banned_in_reading}")
                         else:
-                            print(f"👉 「{surface}」→「{replacement}」（読み：{replacement_reading}）")
+                            print(f"👉 最終結果: 「{surface}」→「{replacement}」（読み：{replacement_reading}）")
                     
                     new_tokens.append(replacement)
                 else:
+                    if verbose:
+                        print(f"✅ そのまま使用: {surface}")
                     new_tokens.append(surface)
             
             rewritten_sentence = ''.join(new_tokens)
             rewritten_sentences.append(rewritten_sentence)
             
             if verbose:
+                print(f"\n📊 文 {i+1}/{total_sentences} 処理完了:")
+                print(f"   - 処理トークン数: {tokens_processed}")
+                print(f"   - 置換トークン数: {tokens_replaced}")
                 print(f"🟢 変換後の文: {rewritten_sentence}")
+                
+                if i < total_sentences - 1:  # Not the last sentence
+                    print("\n" + "=" * 60)
+        
+        if verbose and total_sentences > 1:
+            print(f"\n🎉 全体処理完了: {total_sentences}文の処理が完了しました")
+            print("=" * 60)
         
         return ''.join(rewritten_sentences)
     
