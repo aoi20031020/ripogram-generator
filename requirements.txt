@@ -2,3 +2,9 @@ openai>=1.0.0
 fugashi[unidic-lite]>=1.3.0
 python-dotenv>=1.0.0
 streamlit>=1.28.0
+# English lipogram dependencies
+torch>=1.9.0
+transformers>=4.20.0
+nltk>=3.8
+spacy>=3.4.0
+scikit-learn>=1.0.0
