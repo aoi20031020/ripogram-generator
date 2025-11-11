@@ -86,6 +86,9 @@ streamlit run apps/integrated_streamlit_app.py
 # 日本語版
 python -m ripogram.cli
 
+# 一発生成（ベースライン）モードの例
+python -m ripogram.cli "猿も木から落ちる。" -b "い,さ" -M oneshot -v
+
 # 英語版
 python -m ripogram.english_cli --interactive
 ```
@@ -95,6 +98,12 @@ python -m ripogram.english_cli --interactive
 ```bash
 # 統合デモ
 python examples/demo_integrated.py
+
+# 指標デモ（VRR/制約/多様性）
+python examples/demo_metrics.py
+
+# 一括評価（CSV/JSONL → CSV）
+python scripts/evaluate_jp.py --input data/dev.csv --output results.csv --model gpt-4.1-nano --verbose
 ```
 
 ## 🔧 技術仕様
@@ -133,6 +142,8 @@ python examples/demo_integrated.py
 
 - [英語版詳細ドキュメント](docs/README_ENGLISH.md)
 - [研究発表資料](docs/中間発表リポグラム.pptx.pdf)
+- [評価指標と使い方（METRICS）](docs/METRICS.md)
+- [実験ガイド（発表用）](docs/EXPERIMENT_JP.md)
 
 ## 🎯 使用例
 

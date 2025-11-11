@@ -52,6 +52,14 @@ def main():
         default="gpt-4.1-nano",
         help="OpenAI model to use (default: gpt-4.1-nano)"
     )
+
+    parser.add_argument(
+        "--mode", "-M",
+        type=str,
+        choices=["sequential", "oneshot"],
+        default="sequential",
+        help="Rewriting mode: 'sequential' (token-level) or 'oneshot' (single-pass baseline)"
+    )
     
     parser.add_argument(
         "--verbose", "-v",
@@ -83,13 +91,20 @@ def main():
             api_key=config.openai_api_key,
             model_name=config.model_name
         )
-        
-        # Process the sentence using enhanced context
-        result = rewriter.rewrite_text_with_context(
-            text=args.sentence,
-            banned_chars=banned_chars,
-            verbose=args.verbose
-        )
+
+        # Process the sentence using the selected mode
+        if args.mode == "oneshot":
+            result = rewriter.rewrite_text_one_shot(
+                text=args.sentence,
+                banned_chars=banned_chars,
+                verbose=args.verbose
+            )
+        else:
+            result = rewriter.rewrite_text_with_context(
+                text=args.sentence,
+                banned_chars=banned_chars,
+                verbose=args.verbose
+            )
         
         if args.verbose:
             print("-" * 50)

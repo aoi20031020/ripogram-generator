@@ -50,6 +50,73 @@ class RipogramRewriter:
             result.append(sentences[-1])
         
         return result
+
+    def rewrite_text_one_shot(
+        self,
+        text: str,
+        banned_chars: List[str],
+        verbose: bool = False,
+        temperature: float = 0.5,
+        max_tokens: int = 1200,
+    ) -> str:
+        """
+        Rewrite the entire text in a single LLM call (baseline).
+
+        This method asks the model to rewrite the whole input so that its
+        reading (ひらがな) does not contain any banned kana. It serves as a
+        one-shot baseline for comparison against the token-level sequential
+        rewriting strategy.
+
+        Args:
+            text: Input text to rewrite.
+            banned_chars: List of banned kana (読み基準)。行禁止は展開して渡す。
+            verbose: Whether to print prompt snippet and basic diagnostics.
+            temperature: Sampling temperature for the model.
+            max_tokens: Max tokens for the completion.
+
+        Returns:
+            Rewritten text produced by the model, or original text if the API
+            call fails.
+        """
+        rules = (
+            "【日本語リポグラムのルール】\n"
+            "・禁止文字は読み（ひらがな）での使用が禁止\n"
+            "・出力全文の読み（ひらがな）に禁止文字が一文字も含まれないこと\n"
+            "・文の意味と流れをできるだけ保持し自然な表現に\n"
+            "・句読点や記号はそのままでよい\n"
+        )
+
+        prompt = (
+            f"以下の文章を、日本語リポグラムのルールに従って、"
+            f"禁止文字『{'、'.join(banned_chars)}』を読み（ひらがな）に含まないように"
+            f"一度で自然に言い換えてください。\n\n"
+            f"{rules}\n\n"
+            f"【入力】\n{text}\n\n"
+            "【出力形式】\n"
+            "・説明や引用符を一切付けず、言い換え後の文章のみを出力\n"
+        )
+
+        if verbose:
+            print("[One-shot] Prompt preview:\n" + prompt[:300] + ("..." if len(prompt) > 300 else ""))
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            content = response.choices[0].message.content
+            if not content:
+                return text
+            # Clean common surrounding quotes or markdown fences
+            content = content.strip()
+            content = re.sub(r"^["'\s]+|["'\s]+$", "", content)
+            return content
+        except Exception as e:
+            if verbose:
+                print(f"[One-shot API Error] {e}")
+            return text
     
     def rewrite_token_with_context(
         self, 
