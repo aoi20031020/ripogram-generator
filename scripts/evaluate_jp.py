@@ -31,9 +31,16 @@ import argparse
 import csv
 import json
 import os
+import sys
+from pathlib import Path
 from typing import List, Dict, Any, Iterable
 
 from dotenv import load_dotenv
+
+# Ensure project root is on sys.path when running this script directly
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from ripogram.config import Config
 from ripogram.core.rewriter import RipogramRewriter
@@ -165,4 +172,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -1,0 +1,7 @@
+id,text,banned_chars,constraint_type,genre
+0,"猿も木から落ちる。","い,さ",easy,proverb
+1,"石の上にも三年。","い,さ",easy,proverb
+2,"雨降って地固まる。","あ行: あ,い,う,え,お",medium,proverb
+3,"国境の長いトンネルを抜けると雪国であった。","あ,い,う,え,お",medium,narrative
+4,"今日は良い天気だ。公園に散歩に出かけた。","い",easy,narrative
+5,"新しい言語を学ぶには、多くの文章を読むことが大切だ。","あ,い,う,え,お",medium,narrative

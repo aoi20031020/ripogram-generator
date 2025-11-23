@@ -9,6 +9,21 @@ from .tokenizer import JapaneseTokenizer
 from .utils import contains_banned
 
 
+def _common_lipogram_rules(banned_chars: List[str]) -> str:
+    """
+    Shared Japanese lipogram rules used in both one-shot and sequential prompts.
+    """
+    banned_str = "、".join(banned_chars)
+    return (
+        "【日本語リポグラムのルール】\n"
+        f"・禁止文字「{banned_str}」は読み（ひらがな）での使用が禁止されています\n"
+        "・出力全文（または置き換え語句）の読み（ひらがな）に禁止文字が一文字も含まれないこと\n"
+        "・例：「猫」（ねこ）が禁止なら「ネコ科」（ねこか）も「ね」「こ」を含むため禁止です\n"
+        "・文の意味と流れをできるだけ保持し自然な表現に\n"
+        "・句読点や記号はそのままでよい\n"
+    )
+
+
 class RipogramRewriter:
     """Rewrite Japanese text to avoid banned characters using OpenAI GPT-4."""
     
@@ -78,13 +93,7 @@ class RipogramRewriter:
             Rewritten text produced by the model, or original text if the API
             call fails.
         """
-        rules = (
-            "【日本語リポグラムのルール】\n"
-            "・禁止文字は読み（ひらがな）での使用が禁止\n"
-            "・出力全文の読み（ひらがな）に禁止文字が一文字も含まれないこと\n"
-            "・文の意味と流れをできるだけ保持し自然な表現に\n"
-            "・句読点や記号はそのままでよい\n"
-        )
+        rules = _common_lipogram_rules(banned_chars)
 
         prompt = (
             f"以下の文章を、日本語リポグラムのルールに従って、"
@@ -111,7 +120,8 @@ class RipogramRewriter:
                 return text
             # Clean common surrounding quotes or markdown fences
             content = content.strip()
-            content = re.sub(r"^["'\s]+|["'\s]+$", "", content)
+            # remove leading/trailing quotes and whitespace
+            content = re.sub(r'^["\'\s]+|["\'\s]+$', "", content)
             return content
         except Exception as e:
             if verbose:
@@ -148,13 +158,11 @@ class RipogramRewriter:
         
         for attempt in range(max_attempts):
             # Build enhanced prompt with full context
+            rules = _common_lipogram_rules(banned_chars)
             base_prompt = f"""
 以下の単語「{original_word}」は、禁止文字「{'、'.join(banned_chars)}」を含むため、文脈に合った自然な表現に**単語単位**で言い換えてください。
 
-【日本語リポグラムのルール】
-・禁止文字「{'、'.join(banned_chars)}」は**読み（ひらがな）**での使用が禁止されています
-・変換後の単語を**ひらがなで読んだ時**に禁止文字が一文字でも含まれてはいけません
-・例：「猫」（ねこ）が禁止なら「ネコ科」（ねこか）も「ね」「こ」を含むため禁止です
+{rules}
 
 【文脈情報】
 ・全体の文章：「{full_text}」
@@ -165,7 +173,7 @@ class RipogramRewriter:
 【重要】
 ・文全体の意味と流れを保持してください
 ・文法的に自然な表現を選んでください
-・変換後の単語の読み（ひらがな）に禁止文字「{'、'.join(banned_chars)}」が**一文字も含まれない**こと
+・特に、変換後の単語の読み（ひらがな）に禁止文字「{'、'.join(banned_chars)}」が**一文字も含まれない**こと
 """
             
             # Add failed attempts information if any
