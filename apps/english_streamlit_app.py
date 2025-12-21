@@ -6,10 +6,12 @@ import streamlit as st
 import sys
 import os
 import time
+from pathlib import Path
 from typing import List
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Ensure project root is on sys.path (so `import ripogram` works regardless of CWD)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 try:
     from ripogram.core.english_bert_rewriter import EnglishBertRewriter

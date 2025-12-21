@@ -12,8 +12,9 @@ import base64
 from pathlib import Path
 from typing import List
 
-# Add the current directory to Python path for imports
-sys.path.insert(0, '.')
+# Ensure project root is on sys.path (so `import ripogram` works regardless of CWD)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 try:
     # Japanese version imports

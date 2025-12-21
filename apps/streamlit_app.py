@@ -3,18 +3,22 @@ Streamlit Web Application for Ripogram Generation
 日本語リポグラム生成のためのWebアプリケーション
 """
 
+import sys
+import os
+from pathlib import Path
+from typing import List
+
+# Ensure project root is on sys.path (so `import ripogram` works regardless of CWD)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from ripogram.core.rewriter import RipogramRewriter
 from ripogram.config import Config
 import streamlit as st
-import sys
-import os
-from typing import List
 import traceback
 import base64
-from pathlib import Path
 
-# Add the current directory to Python path for imports
-sys.path.insert(0, '.')
+# NOTE: sys.path is configured above before importing ripogram.
 
 
 # Page configuration
